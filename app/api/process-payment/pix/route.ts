@@ -1,22 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { MercadoPagoConfig, Payment } from "mercadopago"
-
-// Inicializar cliente do Mercado Pago
-const getMercadoPagoClient = () => {
-  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
-
-  if (!accessToken) {
-    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
-    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
-  }
-
-  return new MercadoPagoConfig({
-    accessToken: accessToken,
-    options: {
-      timeout: 10000, // 10 segundos de timeout
-    },
-  })
-}
 
 // Função para extrair DDD e número do telefone formatado
 // Aceita formatos como: (11) 98765-4321, (11) 8765-4321, 11987654321, etc.
@@ -62,11 +44,13 @@ const parsePhone = (phone: string): { area_code: string; number: string } | null
 export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
-    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
+    const accessToken = process.env.MP_ACCESS_TOKEN
+
+    if (!accessToken) {
+      console.error("MP_ACCESS_TOKEN não configurada")
       return NextResponse.json(
         { 
-          error: "MERCADO_PAGO_ACCESS_TOKEN não configurada",
+          error: "Configuração do servidor ausente",
           message: "Token de acesso do Mercado Pago não encontrado"
         },
         { status: 500 }
@@ -98,7 +82,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!amount || typeof amount !== "number" || amount <= 0) {
+    // Garantir que amount seja número
+    const numericAmount = typeof amount === "number" ? amount : Number(amount)
+    
+    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
       return NextResponse.json(
         { 
           error: "amount é obrigatório e deve ser um número positivo",
@@ -108,26 +95,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Obter URL base da variável de ambiente
-    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").replace(/\/$/, "")
-    
-    // Validar formato da URL
-    if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
-      return NextResponse.json(
-        { 
-          error: "NEXT_PUBLIC_BASE_URL deve ser uma URL válida (http:// ou https://)",
-          message: "URL base inválida para notificação"
-        },
-        { status: 500 }
-      )
-    }
-
-    // Construir URL de notificação
-    const notificationUrl = `${baseUrl}/api/webhook/mercadopago`
-
-    // Inicializar cliente e instância de Payment
-    const client = getMercadoPagoClient()
-    const payment = new Payment(client)
+    // Obter URL de notificação
+    const notificationUrl = process.env.MP_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/webhook/mercadopago`
 
     // Parsear telefone se fornecido
     let phoneData = null
@@ -152,13 +121,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Criar pagamento Pix
-    const paymentData = {
-      transaction_amount: amount,
+    // Criar payload para o Mercado Pago
+    const paymentPayload = {
+      transaction_amount: numericAmount,
+      description: "Página de Natal personalizada",
       payment_method_id: "pix",
-      payer: payer,
-      external_reference: pageId,
       notification_url: notificationUrl,
+      external_reference: pageId,
+      payer: payer,
     }
 
     console.log("[process-payment/pix] Criando pagamento Pix:", {
@@ -166,32 +136,48 @@ export async function POST(request: NextRequest) {
       email,
       phone: phone || "não fornecido",
       phoneParsed: phoneData ? `${phoneData.area_code} ${phoneData.number}` : "não parseado",
-      amount,
+      amount: numericAmount,
       notificationUrl,
     })
 
-    const response = await payment.create({ body: paymentData })
+    // Fazer requisição direta à API do Mercado Pago
+    const mpRes = await fetch("https://api.mercadopago.com/v1/payments", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(paymentPayload),
+    })
 
-    // Validar resposta
-    if (!response || !response.id) {
+    const mpData = await mpRes.json()
+
+    // Verificar se houve erro na resposta do Mercado Pago
+    if (!mpRes.ok) {
+      console.error(
+        "[process-payment/pix] Erro ao processar pagamento Pix:",
+        JSON.stringify(mpData, null, 2)
+      )
       return NextResponse.json(
-        { 
-          error: "Não foi possível criar o pagamento",
-          message: "Resposta inválida do Mercado Pago"
+        {
+          error: "Erro ao processar pagamento Pix",
+          detail: mpData,
         },
         { status: 500 }
       )
     }
 
     // Extrair dados do QR Code Pix
-    const pointOfInteraction = response.point_of_interaction
+    const pointOfInteraction = mpData.point_of_interaction
     const transactionData = pointOfInteraction?.transaction_data
 
     if (!transactionData) {
+      console.error("[process-payment/pix] Dados do QR Code não encontrados na resposta:", mpData)
       return NextResponse.json(
         { 
           error: "Dados do QR Code não encontrados",
-          message: "Resposta do pagamento não contém informações do Pix"
+          message: "Resposta do pagamento não contém informações do Pix",
+          detail: mpData,
         },
         { status: 500 }
       )
@@ -201,17 +187,19 @@ export async function POST(request: NextRequest) {
     const qrCodeBase64 = transactionData.qr_code_base64 || null
 
     if (!qrCode) {
+      console.error("[process-payment/pix] QR Code não gerado na resposta:", mpData)
       return NextResponse.json(
         { 
           error: "QR Code não gerado",
-          message: "Não foi possível gerar o código Pix"
+          message: "Não foi possível gerar o código Pix",
+          detail: mpData,
         },
         { status: 500 }
       )
     }
 
     console.log("[process-payment/pix] Pagamento criado com sucesso:", {
-      paymentId: response.id,
+      paymentId: mpData.id,
       pageId,
       hasQrCode: !!qrCode,
       hasQrCodeBase64: !!qrCodeBase64,
@@ -219,13 +207,13 @@ export async function POST(request: NextRequest) {
 
     // Retornar resposta com sucesso
     return NextResponse.json({
-      id: response.id,
+      id: mpData.id,
       qr_code: qrCode,
       qr_code_base64: qrCodeBase64,
     })
 
   } catch (error) {
-    console.error("[process-payment/pix] Erro ao processar pagamento Pix:", {
+    console.error("[process-payment/pix] Erro inesperado ao processar pagamento Pix:", {
       error,
       message: error instanceof Error ? error.message : "Erro desconhecido",
       stack: error instanceof Error ? error.stack : undefined,
@@ -234,7 +222,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: "Erro ao processar pagamento",
-        message: error instanceof Error ? error.message : "Erro desconhecido ao criar pagamento Pix"
+        message: error instanceof Error ? error.message : "Erro desconhecido ao criar pagamento Pix",
+        detail: error instanceof Error ? { message: error.message } : error,
       },
       { status: 500 }
     )

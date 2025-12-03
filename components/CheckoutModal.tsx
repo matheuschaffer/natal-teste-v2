@@ -159,30 +159,45 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
       }
 
       // 2. Criar pagamento Pix via API
+      // Garantir que amount seja número
+      const rawAmount = 3.00
+      const amount = Number(
+        String(rawAmount).replace("R$", "").replace(/\./g, "").replace(",", ".").trim()
+      )
+
+      const payload = {
+        pageId,
+        email: email.trim(),
+        name: name.trim(),
+        phone: phone.trim(),
+        amount: amount,
+      }
+
       const response = await fetch("/api/process-payment/pix", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          pageId,
-          email: email.trim(),
-          name: name.trim(),
-          phone: phone.trim(),
-          amount: 3.00,
-        }),
+        body: JSON.stringify(payload),
       })
 
+      const json = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Erro desconhecido" }))
-        throw new Error(errorData.error || errorData.message || "Erro ao criar pagamento")
+        console.error("Erro detalhado ao processar pagamento:", json)
+        const errorMessage =
+          json?.detail?.message ||
+          json?.detail?.error ||
+          json?.error ||
+          "ver console para mais detalhes"
+        throw new Error(`Erro ao processar pagamento: ${errorMessage}`)
       }
 
-      const data = await response.json()
-      
-      if (!data.id || !data.qr_code) {
+      if (!json.id || !json.qr_code) {
         throw new Error("Dados do pagamento não retornados corretamente")
       }
+
+      const data = json
 
       // Salvar dados do Pix e mudar para tela de pagamento
       setPixData({
