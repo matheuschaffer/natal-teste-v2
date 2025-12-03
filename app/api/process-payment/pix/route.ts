@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { randomUUID } from "crypto"
+import { supabase } from "@/lib/supabase"
 
 // Função para extrair DDD e número do telefone formatado
 // Aceita formatos como: (11) 98765-4321, (11) 8765-4321, 11987654321, etc.
@@ -209,6 +210,33 @@ export async function POST(request: NextRequest) {
       hasQrCode: !!qrCode,
       hasQrCodeBase64: !!qrCodeBase64,
     })
+
+    // Salvar payment_id no Supabase
+    const paymentId = mpData.id
+    const { data: updatedPages, error: supabaseError } = await supabase
+      .from("pages")
+      .update({
+        payment_id: String(paymentId),
+        payment_status: "pending",
+        is_paid: false,
+      })
+      .eq("id", pageId)
+      .select("id, slug, payment_id, payment_status, is_paid")
+      .limit(1)
+
+    if (supabaseError) {
+      console.error("[process-payment/pix] Erro ao atualizar página com payment_id:", supabaseError, { pageId, paymentId })
+      return NextResponse.json(
+        {
+          error: "Erro ao salvar informações de pagamento da página",
+          detail: supabaseError,
+        },
+        { status: 500 }
+      )
+    }
+
+    const updatedPage = updatedPages?.[0]
+    console.log("[process-payment/pix] Página atualizada com payment_id:", { pageId, paymentId, updatedPage })
 
     // Retornar resposta com sucesso
     return NextResponse.json({

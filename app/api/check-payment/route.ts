@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // 3. Buscar página no Supabase (por pageId ou slug)
     let query = supabase
       .from("pages")
-      .select("id, slug, is_paid, payment_id, payment_status")
+      .select("id, slug, is_paid, payment_id, payment_status, paid_at")
     
     if (pageId) {
       query = query.eq("id", pageId)
@@ -110,10 +110,11 @@ export async function POST(request: NextRequest) {
 
     // 4. Se não estiver paga, consultar Mercado Pago usando payment_id
     if (!pageData.payment_id) {
-      console.log(`[check-payment:${requestId}] Página não tem payment_id, pagamento ainda não foi criado`)
+      console.log(`[check-payment:${requestId}] Página não tem payment_id, pagamento ainda não foi criado:`, { pageId: pageData.id, slug: pageData.slug })
       return NextResponse.json({
         success: true,
         paid: false,
+        created: false,
       })
     }
 
