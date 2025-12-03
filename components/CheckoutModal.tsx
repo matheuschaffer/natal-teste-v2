@@ -401,7 +401,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
           <>
             <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0">
               <DialogTitle className="text-2xl md:text-3xl font-bold text-center text-slate-800">
-                Escaneie o QR Code abaixo
+                Escaneie o QR Code Pix
               </DialogTitle>
               <DialogDescription className="text-center text-slate-600 mt-2">
                 Use o app do seu banco para escanear e pagar
