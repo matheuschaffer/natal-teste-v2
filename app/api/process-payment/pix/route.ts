@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { randomUUID } from "crypto"
 
 // Função para extrair DDD e número do telefone formatado
 // Aceita formatos como: (11) 98765-4321, (11) 8765-4321, 11987654321, etc.
@@ -43,6 +44,9 @@ const parsePhone = (phone: string): { area_code: string; number: string } | null
 
 export async function POST(request: NextRequest) {
   try {
+    // Gerar chave de idempotência única
+    const idempotencyKey = randomUUID()
+
     // Validar Access Token
     const accessToken = process.env.MP_ACCESS_TOKEN
 
@@ -146,6 +150,7 @@ export async function POST(request: NextRequest) {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
+        "X-Idempotency-Key": idempotencyKey,
       },
       body: JSON.stringify(paymentPayload),
     })
