@@ -1,37 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { MercadoPagoConfig, Payment } from "mercadopago"
 import { supabase } from "@/lib/supabase"
-
-// Inicializar cliente do Mercado Pago
-const getMercadoPagoClient = () => {
-  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
-
-  if (!accessToken) {
-    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
-    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
-  }
-
-  return new MercadoPagoConfig({
-    accessToken: accessToken,
-    options: {
-      timeout: 5000,
-    },
-  })
-}
 
 export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
-    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
+    const accessToken = process.env.MP_ACCESS_TOKEN
+
+    if (!accessToken) {
+      console.error("MP_ACCESS_TOKEN não configurada")
       return NextResponse.json(
-        { error: "MERCADO_PAGO_ACCESS_TOKEN não configurada" },
+        { error: "Configuração do servidor ausente" },
         { status: 500 }
       )
     }
-
-    const client = getMercadoPagoClient()
-    const payment = new Payment(client)
 
     const body = await request.json()
     const { pageId } = body
@@ -84,7 +65,22 @@ export async function POST(request: NextRequest) {
       
       if (pageData.payment_id) {
         // Se temos o payment_id, buscar diretamente
-        const paymentData = await payment.get({ id: pageData.payment_id })
+        const paymentId = pageData.payment_id.toString()
+        const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        if (!mpRes.ok) {
+          const errorText = await mpRes.text()
+          console.error("Erro ao buscar pagamento:", errorText)
+          throw new Error(`Erro ao buscar pagamento: ${mpRes.status}`)
+        }
+
+        const paymentData = await mpRes.json()
         
         if (paymentData.status === "approved" || paymentData.status === "authorized") {
           // Atualizar no banco
@@ -125,19 +121,13 @@ export async function POST(request: NextRequest) {
         // A API do Mercado Pago permite buscar pagamentos usando filtros
         // Vamos usar a API de busca com filtro de external_reference
         
-        // Nota: A SDK do Mercado Pago pode não ter suporte direto para busca por external_reference
-        // Vamos usar uma chamada HTTP direta à API REST do Mercado Pago
+        // Usar uma chamada HTTP direta à API REST do Mercado Pago
         const searchUrl = `https://api.mercadopago.com/v1/payments/search?external_reference=${pageId}&sort=date_created&criteria=desc&limit=1`
-        
-        const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
-        if (!accessToken) {
-          throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
-        }
 
         const searchResponse = await fetch(searchUrl, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         })

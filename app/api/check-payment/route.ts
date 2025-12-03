@@ -1,50 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { MercadoPagoConfig, Payment } from "mercadopago"
 import { supabase } from "@/lib/supabase"
-
-// Inicializar cliente do Mercado Pago
-const getMercadoPagoClient = () => {
-  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
-  
-  if (!accessToken) {
-    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
-    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
-  }
-
-  console.log("[check-payment] Verificando MERCADO_PAGO_ACCESS_TOKEN:", {
-    exists: !!accessToken,
-    length: accessToken?.length || 0,
-    prefix: accessToken?.substring(0, 10) || "N/A",
-  })
-
-  return new MercadoPagoConfig({
-    accessToken: accessToken,
-    options: {
-      timeout: 10000, // 10 segundos de timeout
-    },
-  })
-}
 
 export async function POST(request: NextRequest) {
   const requestId = Math.random().toString(36).substring(2, 9)
   console.log(`[check-payment:${requestId}] Iniciando verificação de pagamento`)
 
   try {
-    // 1. Validar Access Token
-    let client: MercadoPagoConfig
-    try {
-      client = getMercadoPagoClient()
-      console.log(`[check-payment:${requestId}] Cliente Mercado Pago inicializado com sucesso`)
-    } catch (error) {
-      console.error(`[check-payment:${requestId}] Erro na configuração do Mercado Pago:`, {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      })
+    // Validar Access Token
+    const accessToken = process.env.MP_ACCESS_TOKEN
+
+    if (!accessToken) {
+      console.error("MP_ACCESS_TOKEN não configurada")
       return NextResponse.json(
         { 
           status: "error",
-          error: "Configuração do Mercado Pago inválida",
-          message: error instanceof Error ? error.message : "Erro desconhecido"
+          error: "Configuração do servidor ausente",
+          message: "Token de acesso do Mercado Pago não encontrado"
         },
         { status: 500 }
       )
@@ -151,21 +122,28 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 4. Buscar pagamentos no Mercado Pago usando payment.search
-    const payment = new Payment(client)
-    
+    // 4. Buscar pagamentos no Mercado Pago usando API REST
     let searchResults
     try {
       console.log(`[check-payment:${requestId}] Buscando pagamentos no Mercado Pago para pageId:`, pageId)
       
-      searchResults = await payment.search({
-        options: {
-          external_reference: pageId,
-          sort: "date_created",
-          criteria: "desc",
-          limit: 50, // Buscar até 50 pagamentos (caso haja múltiplas tentativas)
+      const searchUrl = `https://api.mercadopago.com/v1/payments/search?external_reference=${pageId}&sort=date_created&criteria=desc&limit=50`
+      
+      const searchResponse = await fetch(searchUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
       })
+
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text()
+        console.error(`[check-payment:${requestId}] Erro na busca de pagamentos:`, errorText)
+        throw new Error(`Erro ao buscar pagamentos: ${searchResponse.status}`)
+      }
+
+      searchResults = await searchResponse.json()
 
       console.log(`[check-payment:${requestId}] Resultados da busca no Mercado Pago:`, {
         total: searchResults.results?.length || 0,

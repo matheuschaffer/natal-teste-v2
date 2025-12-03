@@ -1,23 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { MercadoPagoConfig, Payment } from "mercadopago"
 import { supabase } from "@/lib/supabase"
-
-// Inicializar cliente do Mercado Pago
-const getMercadoPagoClient = () => {
-  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
-
-  if (!accessToken) {
-    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
-    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
-  }
-
-  return new MercadoPagoConfig({
-    accessToken: accessToken,
-    options: {
-      timeout: 10000, // 10 segundos de timeout
-    },
-  })
-}
 
 export async function POST(request: NextRequest) {
   const requestId = Math.random().toString(36).substring(2, 9)
@@ -25,9 +7,11 @@ export async function POST(request: NextRequest) {
 
   try {
     // Validar Access Token
-    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
-      console.error(`[webhook-mercadopago:${requestId}] MERCADO_PAGO_ACCESS_TOKEN não configurada`)
+    const accessToken = process.env.MP_ACCESS_TOKEN
+
+    if (!accessToken) {
+      console.error("MP_ACCESS_TOKEN não configurada")
+      console.error(`[webhook-mercadopago:${requestId}] MP_ACCESS_TOKEN não configurada`)
       // Retornar 200 mesmo em erro para não fazer o MP repetir
       return NextResponse.json({}, { status: 200 })
     }
@@ -74,13 +58,26 @@ export async function POST(request: NextRequest) {
 
     // SEGURANÇA: Não confiar apenas no JSON recebido
     // Consultar a API do Mercado Pago para confirmar o status real
-    const client = getMercadoPagoClient()
-    const payment = new Payment(client)
-
     let paymentData
     try {
       console.log(`[webhook-mercadopago:${requestId}] Consultando pagamento na API do Mercado Pago:`, paymentId)
-      paymentData = await payment.get({ id: paymentId.toString() })
+      
+      const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId.toString()}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!mpRes.ok) {
+        const errorText = await mpRes.text()
+        console.error(`[webhook-mercadopago:${requestId}] Erro ao consultar pagamento:`, errorText)
+        // Retornar 200 para não fazer o MP repetir
+        return NextResponse.json({}, { status: 200 })
+      }
+
+      paymentData = await mpRes.json()
       
       console.log(`[webhook-mercadopago:${requestId}] Dados do pagamento consultados:`, {
         paymentId: paymentData.id,
