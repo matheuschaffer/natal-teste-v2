@@ -78,7 +78,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
       
       const interval = setInterval(async () => {
         try {
-          const response = await fetch("/api/check-payment", {
+          const resp = await fetch("/api/check-payment", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -86,16 +86,16 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
             body: JSON.stringify({ pageId }),
           })
 
-          if (!response.ok) {
-            console.warn("[CheckoutModal] Erro na resposta da API de verificação")
+          const json = await resp.json()
+
+          if (!resp.ok) {
+            console.error("[CheckoutModal] Erro ao verificar pagamento:", json)
             return
           }
 
-          const data = await response.json()
-
           // Verificar se o pagamento foi aprovado
-          if (data.status === "approved" || data.isPaid) {
-            console.log("[CheckoutModal] Pagamento aprovado! Parando polling e recarregando página")
+          if (json.paid) {
+            console.log("[CheckoutModal] Pagamento aprovado! Parando polling e redirecionando")
             
             // Parar o intervalo
             clearInterval(interval)
@@ -103,11 +103,15 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
             // Mostrar feedback de sucesso (confetes)
             celebrate()
             
-            // Pequeno delay para garantir que os confetes apareçam
-            setTimeout(() => {
-              // Recarregar a página para mostrar o QR Code desbloqueado
-              window.location.reload()
-            }, 1500)
+            // Redirecionar para a página personalizada
+            const redirectSlug = json.slug
+            if (redirectSlug) {
+              setTimeout(() => {
+                window.location.href = `/${redirectSlug}`
+              }, 1500)
+            } else {
+              console.warn("[CheckoutModal] Pagamento aprovado mas slug não veio na resposta")
+            }
           }
         } catch (error) {
           console.error("[CheckoutModal] Erro ao verificar pagamento:", error)
@@ -240,7 +244,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
 
     setIsCheckingPayment(true)
     try {
-      const response = await fetch("/api/check-payment", {
+      const resp = await fetch("/api/check-payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -248,25 +252,37 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
         body: JSON.stringify({ pageId }),
       })
 
-      if (!response.ok) {
-        throw new Error("Erro na resposta da API")
-      }
+      const json = await resp.json()
 
-      const data = await response.json()
-
-      if (data.status === "approved" || data.isPaid) {
-        // Mostrar feedback de sucesso (confetes)
-        celebrate()
-        
-        // Pequeno delay para garantir que os confetes apareçam
-        setTimeout(() => {
-          // Recarregar a página para mostrar o QR Code desbloqueado
-          window.location.reload()
-        }, 1500)
-      } else {
+      if (!resp.ok) {
+        console.error("Erro ao verificar pagamento:", json)
+        alert("Erro ao verificar pagamento. Tente novamente.")
         setIsCheckingPayment(false)
-        alert("Pagamento ainda não confirmado. Aguarde alguns instantes e tente novamente.")
+        return
       }
+
+      if (json.paid) {
+        // Se a API retornar slug, usa ele para redirecionar
+        const redirectSlug = json.slug
+        if (redirectSlug) {
+          // Mostrar feedback de sucesso (confetes)
+          celebrate()
+          
+          // Pequeno delay para garantir que os confetes apareçam
+          setTimeout(() => {
+            window.location.href = `/${redirectSlug}`
+          }, 1500)
+        } else {
+          console.warn("Pagamento aprovado mas slug não veio na resposta.")
+          setIsCheckingPayment(false)
+        }
+        return
+      }
+
+      // Caso ainda não esteja pago: apenas informa o usuário, sem fechar o modal
+      console.log("Pagamento ainda não confirmado, tente novamente em alguns segundos.")
+      setIsCheckingPayment(false)
+      alert("Pagamento ainda não confirmado. Aguarde alguns instantes e tente novamente.")
     } catch (error) {
       console.error("Erro ao verificar pagamento:", error)
       setIsCheckingPayment(false)

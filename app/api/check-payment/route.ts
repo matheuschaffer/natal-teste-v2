@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       console.error("MP_ACCESS_TOKEN não configurada")
       return NextResponse.json(
         { 
-          status: "error",
+          success: false,
           error: "Configuração do servidor ausente",
           message: "Token de acesso do Mercado Pago não encontrado"
         },
@@ -22,18 +22,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Validar body da requisição
-    let body: { pageId?: string }
+    let body: { pageId?: string; slug?: string; paymentId?: string }
     try {
       body = await request.json()
       console.log(`[check-payment:${requestId}] Body recebido:`, {
         hasPageId: !!body.pageId,
-        pageIdLength: body.pageId?.length || 0,
+        hasSlug: !!body.slug,
+        hasPaymentId: !!body.paymentId,
       })
     } catch (error) {
       console.error(`[check-payment:${requestId}] Erro ao parsear body:`, error)
       return NextResponse.json(
         { 
-          status: "error",
+          success: false,
           error: "Body da requisição inválido",
           message: "Não foi possível processar os dados da requisição"
         },
@@ -41,66 +42,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { pageId } = body
+    const { pageId, slug } = body
 
-    if (!pageId || typeof pageId !== "string" || pageId.trim() === "") {
-      console.error(`[check-payment:${requestId}] pageId inválido:`, pageId)
+    // Validar que temos pelo menos pageId ou slug
+    if ((!pageId || typeof pageId !== "string" || pageId.trim() === "") &&
+        (!slug || typeof slug !== "string" || slug.trim() === "")) {
+      console.error(`[check-payment:${requestId}] pageId ou slug inválido:`, { pageId, slug })
       return NextResponse.json(
         { 
-          status: "error",
-          error: "pageId é obrigatório e deve ser uma string não vazia",
-          message: "ID da página não fornecido"
+          success: false,
+          error: "pageId ou slug é obrigatório",
+          message: "Identificador da página não fornecido"
         },
         { status: 400 }
       )
     }
 
-    console.log(`[check-payment:${requestId}] Buscando página no Supabase:`, pageId)
+    console.log(`[check-payment:${requestId}] Buscando página no Supabase:`, { pageId, slug })
 
-    // 3. Verificar se a página existe e já está paga
-    const { data: pageData, error: pageError } = await supabase
+    // 3. Buscar página no Supabase (por pageId ou slug)
+    let query = supabase
       .from("pages")
-      .select("id, is_paid, payment_id")
-      .eq("id", pageId)
-      .single()
+      .select("id, slug, is_paid, payment_id, payment_status")
+    
+    if (pageId) {
+      query = query.eq("id", pageId)
+    } else if (slug) {
+      query = query.eq("slug", slug)
+    }
+    
+    const { data: pageData, error: pageError } = await query.single()
 
-    if (pageError) {
+    if (pageError || !pageData) {
       console.error(`[check-payment:${requestId}] Erro ao buscar página no Supabase:`, {
         error: pageError,
-        code: pageError.code,
-        message: pageError.message,
         pageId,
+        slug,
       })
       
-      // Se for erro de "não encontrado", retornar 404
-      if (pageError.code === "PGRST116") {
-        return NextResponse.json(
-          { 
-            status: "error",
-            error: "Página não encontrada",
-            message: "A página solicitada não existe no banco de dados"
-          },
-          { status: 404 }
-        )
-      }
-
       return NextResponse.json(
         { 
-          status: "error",
-          error: "Erro ao buscar página no banco de dados",
-          message: pageError.message
-        },
-        { status: 500 }
-      )
-    }
-
-    if (!pageData) {
-      console.error(`[check-payment:${requestId}] Página não encontrada:`, pageId)
-      return NextResponse.json(
-        { 
-          status: "error",
+          success: false,
           error: "Página não encontrada",
-          message: "A página solicitada não existe"
+          message: "A página solicitada não existe no banco de dados"
         },
         { status: 404 }
       )
@@ -108,28 +92,36 @@ export async function POST(request: NextRequest) {
 
     console.log(`[check-payment:${requestId}] Página encontrada:`, {
       id: pageData.id,
+      slug: pageData.slug,
       is_paid: pageData.is_paid,
+      payment_status: pageData.payment_status,
       payment_id: pageData.payment_id,
     })
 
-    // Se já está paga, retornar sucesso imediatamente
-    if (pageData.is_paid) {
+    // Se já está paga ou tem status approved, retornar sucesso imediatamente
+    if (pageData.is_paid || pageData.payment_status === "approved") {
       console.log(`[check-payment:${requestId}] Página já está paga, retornando sucesso imediato`)
       return NextResponse.json({
-        status: "approved",
-        message: "Pagamento já confirmado",
-        isPaid: true,
+        success: true,
+        paid: true,
+        slug: pageData.slug,
       })
     }
 
-    // 4. Buscar pagamentos no Mercado Pago usando API REST
-    let searchResults
+    // 4. Se não estiver paga, consultar Mercado Pago usando payment_id
+    if (!pageData.payment_id) {
+      console.log(`[check-payment:${requestId}] Página não tem payment_id, pagamento ainda não foi criado`)
+      return NextResponse.json({
+        success: true,
+        paid: false,
+      })
+    }
+
+    // Consultar pagamento no Mercado Pago usando payment_id
     try {
-      console.log(`[check-payment:${requestId}] Buscando pagamentos no Mercado Pago para pageId:`, pageId)
+      console.log(`[check-payment:${requestId}] Consultando pagamento no Mercado Pago:`, pageData.payment_id)
       
-      const searchUrl = `https://api.mercadopago.com/v1/payments/search?external_reference=${pageId}&sort=date_created&criteria=desc&limit=50`
-      
-      const searchResponse = await fetch(searchUrl, {
+      const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${pageData.payment_id}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -137,152 +129,79 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      if (!searchResponse.ok) {
-        const errorText = await searchResponse.text()
-        console.error(`[check-payment:${requestId}] Erro na busca de pagamentos:`, errorText)
-        throw new Error(`Erro ao buscar pagamentos: ${searchResponse.status}`)
+      if (!mpRes.ok) {
+        const errorText = await mpRes.text()
+        console.error(`[check-payment:${requestId}] Erro ao consultar pagamento:`, errorText)
+        // Não tratar como erro fatal, apenas retornar que não está pago
+        return NextResponse.json({
+          success: true,
+          paid: false,
+        })
       }
 
-      searchResults = await searchResponse.json()
+      const paymentData = await mpRes.json()
 
-      console.log(`[check-payment:${requestId}] Resultados da busca no Mercado Pago:`, {
-        total: searchResults.results?.length || 0,
-        pageId,
-        hasResults: !!(searchResults.results && searchResults.results.length > 0),
+      console.log(`[check-payment:${requestId}] Status do pagamento:`, {
+        paymentId: paymentData.id,
+        status: paymentData.status,
       })
-      
-      if (searchResults.results && searchResults.results.length > 0) {
-        console.log(`[check-payment:${requestId}] Primeiros 3 resultados:`, 
-          searchResults.results.slice(0, 3).map(r => ({
-            id: r.id,
-            status: r.status,
-            external_reference: r.external_reference,
-          }))
-        )
+
+      // Se o pagamento foi aprovado, atualizar no Supabase
+      if (paymentData.status === "approved") {
+        const paidAt = new Date().toISOString()
+        
+        console.log(`[check-payment:${requestId}] Pagamento aprovado! Atualizando página no Supabase`)
+        
+        const { error: updateError } = await supabase
+          .from("pages")
+          .update({
+            is_paid: true,
+            payment_status: "approved",
+            paid_at: paidAt,
+          })
+          .eq("id", pageData.id)
+
+        if (updateError) {
+          console.error(`[check-payment:${requestId}] Erro ao atualizar página no Supabase:`, updateError)
+          // Mesmo com erro de atualização, retornar que está pago pois o Mercado Pago confirmou
+          return NextResponse.json({
+            success: true,
+            paid: true,
+            slug: pageData.slug,
+          })
+        }
+
+        return NextResponse.json({
+          success: true,
+          paid: true,
+          slug: pageData.slug,
+        })
       }
+
+      // Se não for approved, retornar que ainda não está pago
+      console.log(`[check-payment:${requestId}] Pagamento ainda não aprovado, status:`, paymentData.status)
+      return NextResponse.json({
+        success: true,
+        paid: false,
+      })
+
     } catch (mpError: unknown) {
-      const errorMessage = mpError instanceof Error ? mpError.message : "Erro desconhecido na API do Mercado Pago"
-      const errorStatus = (mpError as any)?.status
+      const errorMessage = mpError instanceof Error ? mpError.message : "Erro desconhecido"
       
-      console.error(`[check-payment:${requestId}] Erro ao buscar pagamentos no Mercado Pago:`, {
+      console.error(`[check-payment:${requestId}] Erro ao consultar Mercado Pago:`, {
         error: mpError,
         message: errorMessage,
-        status: errorStatus,
-        pageId,
-        errorType: mpError instanceof Error ? mpError.constructor.name : typeof mpError,
       })
       
-      // Não derrubar a rota, retornar erro estruturado
-      return NextResponse.json(
-        {
-          status: "error",
-          error: "Erro ao consultar pagamento no Mercado Pago",
-          message: errorMessage,
-        },
-        { status: 500 }
-      )
-    }
-
-    // 5. Validar se encontrou resultados
-    if (!searchResults || !searchResults.results || searchResults.results.length === 0) {
-      console.log(`[check-payment:${requestId}] Nenhum pagamento encontrado para pageId:`, pageId)
+      // Não tratar como erro fatal, apenas retornar que não está pago
       return NextResponse.json({
-        status: "pending",
-        message: "Nenhum pagamento encontrado para esta página",
-        isPaid: false,
+        success: true,
+        paid: false,
       })
     }
-
-    // 6. Iterar sobre os resultados e procurar pelo menos um pagamento aprovado
-    let approvedPayment = null
-    
-    console.log(`[check-payment:${requestId}] Iterando sobre ${searchResults.results.length} resultados`)
-    
-    for (const paymentResult of searchResults.results) {
-      // Verificar se o status é aprovado ou autorizado
-      if (paymentResult.status === "approved" || paymentResult.status === "authorized") {
-        approvedPayment = paymentResult
-        console.log(`[check-payment:${requestId}] Pagamento aprovado encontrado:`, {
-          paymentId: paymentResult.id,
-          status: paymentResult.status,
-          pageId,
-          external_reference: paymentResult.external_reference,
-        })
-        break // Encontrou um aprovado, pode parar
-      }
-    }
-
-    // 7. Se encontrou pagamento aprovado, atualizar no Supabase
-    if (approvedPayment) {
-      const paidAt = new Date().toISOString()
-      
-      console.log(`[check-payment:${requestId}] Atualizando página no Supabase:`, {
-        pageId,
-        paymentId: approvedPayment.id,
-        status: approvedPayment.status,
-      })
-      
-      const { error: updateError } = await supabase
-        .from("pages")
-        .update({
-          is_paid: true,
-          payment_id: approvedPayment.id?.toString() || null,
-          payment_status: approvedPayment.status || "approved",
-          paid_at: paidAt,
-        })
-        .eq("id", pageId)
-
-      if (updateError) {
-        console.error(`[check-payment:${requestId}] Erro ao atualizar página no Supabase:`, {
-          error: updateError,
-          pageId,
-          paymentId: approvedPayment.id,
-          errorCode: updateError.code,
-          errorMessage: updateError.message,
-        })
-        
-        return NextResponse.json(
-          {
-            status: "error",
-            error: "Erro ao atualizar status de pagamento no banco de dados",
-            message: updateError.message,
-          },
-          { status: 500 }
-        )
-      }
-
-      console.log(`[check-payment:${requestId}] Página atualizada com sucesso:`, {
-        pageId,
-        paymentId: approvedPayment.id,
-        status: approvedPayment.status,
-      })
-
-      return NextResponse.json({
-        status: "approved",
-        message: "Pagamento confirmado com sucesso!",
-        isPaid: true,
-        paymentStatus: approvedPayment.status,
-        paymentId: approvedPayment.id,
-      })
-    }
-
-    // 8. Se não encontrou pagamento aprovado, retornar status pending
-    const latestPayment = searchResults.results[0] // Pegar o mais recente
-    console.log(`[check-payment:${requestId}] Pagamento encontrado mas não aprovado:`, {
-      paymentId: latestPayment.id,
-      status: latestPayment.status,
-      pageId,
-    })
-
-    return NextResponse.json({
-      status: "pending",
-      message: `Pagamento encontrado, mas status é: ${latestPayment.status}`,
-      isPaid: false,
-      paymentStatus: latestPayment.status,
-    })
 
   } catch (error) {
-    // Erro genérico não capturado
+    // Erro genérico não capturado - só retornar 500 em caso de erro real de configuração
     console.error(`[check-payment:${requestId}] Erro inesperado:`, {
       error,
       message: error instanceof Error ? error.message : "Erro desconhecido",
@@ -292,7 +211,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        status: "error",
+        success: false,
         error: "Erro interno ao verificar pagamento",
         message: error instanceof Error ? error.message : "Erro desconhecido",
       },
