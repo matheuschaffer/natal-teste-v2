@@ -6,15 +6,16 @@ import { supabase } from "@/lib/supabase"
 const getMercadoPagoClient = () => {
   const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
   
+  if (!accessToken) {
+    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
+    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
+  }
+
   console.log("[check-payment] Verificando MERCADO_PAGO_ACCESS_TOKEN:", {
     exists: !!accessToken,
     length: accessToken?.length || 0,
     prefix: accessToken?.substring(0, 10) || "N/A",
   })
-  
-  if (!accessToken) {
-    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
-  }
 
   return new MercadoPagoConfig({
     accessToken: accessToken,

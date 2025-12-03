@@ -6,6 +6,7 @@ const getMercadoPagoClient = () => {
   const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
   if (!accessToken) {
+    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
     throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
   }
 
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
       return NextResponse.json(
         { 
           error: "MERCADO_PAGO_ACCESS_TOKEN não configurada",

@@ -3,24 +3,35 @@ import { MercadoPagoConfig, Payment } from "mercadopago"
 import { supabase } from "@/lib/supabase"
 
 // Inicializar cliente do Mercado Pago
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!,
-  options: {
-    timeout: 5000,
-  },
-})
+const getMercadoPagoClient = () => {
+  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
-const payment = new Payment(client)
+  if (!accessToken) {
+    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
+    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
+  }
+
+  return new MercadoPagoConfig({
+    accessToken: accessToken,
+    options: {
+      timeout: 5000,
+    },
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
       return NextResponse.json(
         { error: "MERCADO_PAGO_ACCESS_TOKEN não configurada" },
         { status: 500 }
       )
     }
+
+    const client = getMercadoPagoClient()
+    const payment = new Payment(client)
 
     const body = await request.json()
     const { pageId } = body
@@ -118,10 +129,15 @@ export async function POST(request: NextRequest) {
         // Vamos usar uma chamada HTTP direta à API REST do Mercado Pago
         const searchUrl = `https://api.mercadopago.com/v1/payments/search?external_reference=${pageId}&sort=date_created&criteria=desc&limit=1`
         
+        const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+        if (!accessToken) {
+          throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
+        }
+
         const searchResponse = await fetch(searchUrl, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
+            "Authorization": `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         })

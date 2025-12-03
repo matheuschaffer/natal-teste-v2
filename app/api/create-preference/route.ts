@@ -2,25 +2,36 @@ import { NextRequest, NextResponse } from "next/server"
 import { MercadoPagoConfig, Preference } from "mercadopago"
 
 // Inicializar cliente do Mercado Pago
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!,
-  options: {
-    timeout: 5000,
-    idempotencyKey: "abc",
-  },
-})
+const getMercadoPagoClient = () => {
+  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
-const preference = new Preference(client)
+  if (!accessToken) {
+    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
+    throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
+  }
+
+  return new MercadoPagoConfig({
+    accessToken: accessToken,
+    options: {
+      timeout: 5000,
+      idempotencyKey: "abc",
+    },
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
       return NextResponse.json(
         { error: "MERCADO_PAGO_ACCESS_TOKEN não configurada" },
         { status: 500 }
       )
     }
+
+    const client = getMercadoPagoClient()
+    const preference = new Preference(client)
 
     const body = await request.json()
     const { pageId, title, email, name } = body

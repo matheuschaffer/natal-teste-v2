@@ -7,6 +7,7 @@ const getMercadoPagoClient = () => {
   const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
 
   if (!accessToken) {
+    console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
     throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada")
   }
 
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error("ERRO CRÍTICO: Token MP ausente - MERCADO_PAGO_ACCESS_TOKEN não configurada")
       console.error(`[webhook-mercadopago:${requestId}] MERCADO_PAGO_ACCESS_TOKEN não configurada`)
       // Retornar 200 mesmo em erro para não fazer o MP repetir
       return NextResponse.json({}, { status: 200 })
