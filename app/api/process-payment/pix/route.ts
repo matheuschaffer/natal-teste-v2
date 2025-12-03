@@ -17,6 +17,47 @@ const getMercadoPagoClient = () => {
   })
 }
 
+// Função para extrair DDD e número do telefone formatado
+// Aceita formatos como: (11) 98765-4321, (11) 8765-4321, 11987654321, etc.
+const parsePhone = (phone: string): { area_code: string; number: string } | null => {
+  if (!phone || typeof phone !== "string") {
+    return null
+  }
+
+  try {
+    // Remove todos os caracteres não numéricos
+    const numbers = phone.replace(/\D/g, "")
+
+    // Valida se tem pelo menos 10 dígitos (DDD + número mínimo)
+    if (numbers.length < 10 || numbers.length > 11) {
+      return null
+    }
+
+    // Extrai DDD (2 primeiros dígitos) e número (restante)
+    const areaCode = numbers.substring(0, 2)
+    const number = numbers.substring(2)
+
+    // Valida DDD (deve estar entre 11 e 99)
+    const dddNum = parseInt(areaCode, 10)
+    if (dddNum < 11 || dddNum > 99) {
+      return null
+    }
+
+    // Valida número (deve ter 8 ou 9 dígitos)
+    if (number.length < 8 || number.length > 9) {
+      return null
+    }
+
+    return {
+      area_code: areaCode,
+      number: number,
+    }
+  } catch (error) {
+    console.warn("[process-payment/pix] Erro ao parsear telefone:", phone, error)
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Validar Access Token
@@ -32,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Parse do body da requisição
     const body = await request.json()
-    const { pageId, email, name, amount } = body
+    const { pageId, email, name, phone, amount } = body
 
     // Validação dos campos obrigatórios
     if (!pageId || typeof pageId !== "string" || pageId.trim() === "") {
@@ -86,14 +127,34 @@ export async function POST(request: NextRequest) {
     const client = getMercadoPagoClient()
     const payment = new Payment(client)
 
+    // Parsear telefone se fornecido
+    let phoneData = null
+    if (phone) {
+      phoneData = parsePhone(phone)
+      if (!phoneData) {
+        console.warn("[process-payment/pix] Telefone fornecido mas não pôde ser parseado:", phone)
+      }
+    }
+
+    // Criar objeto payer
+    const payer: any = {
+      email: email.trim(),
+      first_name: name?.trim() || email.split("@")[0], // Usa nome ou parte do email
+    }
+
+    // Adicionar telefone ao payer se foi parseado com sucesso
+    if (phoneData) {
+      payer.phone = {
+        area_code: phoneData.area_code,
+        number: phoneData.number,
+      }
+    }
+
     // Criar pagamento Pix
     const paymentData = {
       transaction_amount: amount,
       payment_method_id: "pix",
-      payer: {
-        email: email.trim(),
-        first_name: name?.trim() || email.split("@")[0], // Usa nome ou parte do email
-      },
+      payer: payer,
       external_reference: pageId,
       notification_url: notificationUrl,
     }
@@ -101,6 +162,8 @@ export async function POST(request: NextRequest) {
     console.log("[process-payment/pix] Criando pagamento Pix:", {
       pageId,
       email,
+      phone: phone || "não fornecido",
+      phoneParsed: phoneData ? `${phoneData.area_code} ${phoneData.number}` : "não parseado",
       amount,
       notificationUrl,
     })
