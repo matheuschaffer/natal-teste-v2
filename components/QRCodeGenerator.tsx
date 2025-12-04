@@ -16,7 +16,7 @@ export function QRCodeGenerator({ slug, onDownloadReady }: QRCodeGeneratorProps)
   // Construir URL completa (hardcoded para produção, mas pode usar env)
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
     ? process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "")
-    : "https://natal-surpresa.vercel.app"
+    : "https://surpresadenatal.com"
   
   const fullUrl = `${baseUrl}/${slug}`
 

@@ -78,7 +78,7 @@ export function FinalResultPreview({
       ? process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "")
       : typeof window !== "undefined"
       ? window.location.origin
-      : "natalmagico.com";
+      : "https://surpresadenatal.com";
 
     const domain = baseUrl.replace(/^https?:\/\//, "");
 
