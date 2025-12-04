@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obter URL de notificação
-    const notificationUrl = process.env.MP_WEBHOOK_URL || `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/webhook/mercadopago`
+    const notificationUrl = process.env.MP_WEBHOOK_URL
 
     // Parsear telefone se fornecido
     let phoneData = null
