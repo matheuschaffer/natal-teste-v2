@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         {
           title: `Homenagem Natal Mágico - ${title}`,
           quantity: 1,
-          unit_price: 3.00,
+          unit_price: 19.90,
           currency_id: "BRL",
         },
       ],

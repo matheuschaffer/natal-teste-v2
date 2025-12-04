@@ -56,7 +56,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
   const [pixData, setPixData] = useState<PixData | null>(null)
   const [copied, setCopied] = useState(false)
   const [isCheckingPayment, setIsCheckingPayment] = useState(false)
-  const [amount] = useState(3.00) // Valor fixo do pagamento
+  const [amount] = useState(19.90) // Valor fixo do pagamento
   const { celebrate } = useCelebration()
 
   // Resetar estados quando o modal fechar
@@ -185,7 +185,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
 
       // 2. Criar pagamento Pix via API
       // Garantir que amount seja número
-      const rawAmount = 3.00
+      const rawAmount = 19.90
       const amount = Number(
         String(rawAmount).replace("R$", "").replace(/\./g, "").replace(",", ".").trim()
       )
@@ -444,7 +444,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
                       </div>
                     ) : (
                       <>
-                        Gerar QR Code Pix - R$ 3,00
+                        Gerar QR Code Pix - R$ 19,90
                       </>
                     )}
                   </Button>

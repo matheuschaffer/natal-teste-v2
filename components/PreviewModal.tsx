@@ -244,7 +244,7 @@ export function PreviewModal({
 
               <p className="text-center text-sm text-slate-600">
                 Acesso vitalício + QR Code para imprimir por apenas{" "}
-                <span className="font-bold text-amber-600">R$ 3,00</span>
+                <span className="font-bold text-amber-600">R$ 19,90</span>
               </p>
             </motion.div>
           </div>

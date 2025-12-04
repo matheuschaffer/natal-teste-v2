@@ -1032,7 +1032,7 @@ export function HomenagemRenderer({
                     onClick={handlePayNow}
                     className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-amber-500/50 transition-all duration-300 flex items-center justify-center gap-2"
                   >
-                    Pagar Agora - R$ 3,00
+                    Pagar Agora - R$ 19,90
                   </motion.button>
 
                   {data.id && (
