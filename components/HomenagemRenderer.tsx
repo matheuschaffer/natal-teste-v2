@@ -869,6 +869,95 @@ export function HomenagemRenderer({
           </section>
         )}
 
+        {/* Seção: Como usar esta surpresa */}
+        {!isPreviewMode && (
+          <section
+            className={`py-8 ${
+              isDarkTheme ? "bg-[#f5f0e8]/80" : "bg-slate-50/80"
+            }`}
+          >
+            <div className="container mx-auto px-4 max-w-3xl">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border-2 border-amber-200/50"
+              >
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Sparkles className="w-6 h-6 text-amber-500" />
+                  <h3
+                    className={`text-xl md:text-2xl font-bold ${
+                      isDarkTheme ? "text-slate-800" : "text-slate-900"
+                    }`}
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    ✨ Como usar esta surpresa
+                  </h3>
+                  <Sparkles className="w-6 h-6 text-amber-500" />
+                </div>
+                <div
+                  className={`text-base md:text-lg leading-relaxed ${
+                    isDarkTheme ? "text-slate-700" : "text-slate-800"
+                  }`}
+                >
+                  <p>
+                    1. <strong>Baixe o QR Code</strong> em imagem ou PDF.<br/>
+                    2. <strong>Compartilhe com sua família</strong> pelo WhatsApp, e-mail ou impresso.<br/>
+                    3. <strong>Peça para apontarem a câmera</strong> do celular para o QR e curtirem a homenagem. 🎧
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
+
+        {/* Bloco Final Emocional */}
+        {!isPreviewMode && (
+          <section
+            className={`py-8 ${
+              isDarkTheme ? "bg-[#f5f0e8]/80" : "bg-slate-50/80"
+            }`}
+          >
+            <div className="container mx-auto px-4 max-w-3xl text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h3
+                    className={`text-xl md:text-2xl font-bold mb-3 ${
+                      isDarkTheme ? "text-slate-800" : "text-slate-900"
+                    }`}
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    💌 Mensagem final
+                  </h3>
+                  <p
+                    className={`text-base md:text-lg leading-relaxed ${
+                      isDarkTheme ? "text-slate-700" : "text-slate-800"
+                    }`}
+                  >
+                    Que esta homenagem aqueça o coração de quem você ama. Obrigado por deixar o Natal mais especial com a sua criatividade.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-amber-200/50">
+                  <p
+                    className={`text-sm italic ${
+                      isDarkTheme ? "text-slate-600" : "text-slate-700"
+                    }`}
+                  >
+                    Feito com carinho por Surpresa de Natal ✨
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
+
         {/* DOBRA 6: Assinatura */}
         <section
           className={`py-6 ${isPreviewMode ? "pb-32" : "pb-16"} ${
@@ -912,31 +1001,57 @@ export function HomenagemRenderer({
             }`}
           >
             <div className="container mx-auto px-4 max-w-3xl">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="text-center mb-10"
-              >
-                <h2
-                  className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-3 ${
-                    isDarkTheme ? "text-slate-800" : "text-slate-900"
-                  }`}
-                  style={{ fontFamily: "var(--font-playfair)" }}
+              {isPaid ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="text-center mb-10"
                 >
-                  Gere o QR Code para compartilhar sua mensagem 🚀
-                </h2>
-                <p
-                  className={`text-base md:text-lg ${
-                    isDarkTheme ? "text-slate-600" : "text-slate-700"
-                  }`}
+                  <div className="bg-gradient-to-br from-amber-50 to-rose-50 rounded-2xl p-6 md:p-8 shadow-lg border-2 border-amber-200/50 mb-8">
+                    <h2
+                      className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-3 ${
+                        isDarkTheme ? "text-slate-800" : "text-slate-900"
+                      }`}
+                      style={{ fontFamily: "var(--font-playfair)" }}
+                    >
+                      🎉 Parabéns! Sua página mágica foi liberada!
+                    </h2>
+                    <p
+                      className={`text-base md:text-lg ${
+                        isDarkTheme ? "text-slate-600" : "text-slate-700"
+                      }`}
+                    >
+                      Agora é só baixar o QR Code e compartilhar essa homenagem com quem você ama. 💖
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="text-center mb-10"
                 >
-                  {isPaid
-                    ? "Sua homenagem está liberada! Compartilhe com sua família."
-                    : "Finalize o pagamento para desbloquear o acesso eterno."}
-                </p>
-              </motion.div>
+                  <h2
+                    className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-3 ${
+                      isDarkTheme ? "text-slate-800" : "text-slate-900"
+                    }`}
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    Gere o QR Code para compartilhar sua mensagem 🚀
+                  </h2>
+                  <p
+                    className={`text-base md:text-lg ${
+                      isDarkTheme ? "text-slate-600" : "text-slate-700"
+                    }`}
+                  >
+                    Finalize o pagamento para desbloquear o acesso eterno.
+                  </p>
+                </motion.div>
+              )}
 
               {!isPaid ? (
                 /* ESTADO A: Bloqueado */
@@ -1048,6 +1163,19 @@ export function HomenagemRenderer({
                       <Download className="w-5 h-5 mr-2" />
                       Baixar QR em PDF
                     </Button>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.8 }}
+                    className="mt-4"
+                  >
+                    <p className="text-xs text-center opacity-80 text-slate-600">
+                      📥 <strong>Escolha como baixar:</strong><br/>
+                      – <strong>Imagem</strong>: ideal para WhatsApp e Instagram.<br/>
+                      – <strong>PDF</strong>: ótima qualidade para imprimir ou enviar por e-mail.
+                    </p>
                   </motion.div>
 
                   <motion.div
