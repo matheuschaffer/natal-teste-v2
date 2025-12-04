@@ -39,7 +39,7 @@ As mensagens devem ser:
 - Apropriadas para o contexto familiar
 - Escritas em português brasileiro
 - Com um tom caloroso e acolhedor
-- IMPORTANTE: Responda com uma única mensagem em português, com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite. Idealmente, entre 300 e 500 caracteres.
+- IMPORTANTE: Escreva em português brasileiro, com no máximo 500 caracteres (contando espaços), em um único parágrafo, e NÃO coloque nenhuma assinatura no final. Não escreva nada como 'Seu Nome', 'Com carinho', 'Atenciosamente' ou variações. Não ultrapasse o limite de 500 caracteres.
 
 ${userContext ? `Contexto adicional fornecido pelo usuário: ${userContext}` : ""}`
 
@@ -48,17 +48,17 @@ ${userContext ? `Contexto adicional fornecido pelo usuário: ${userContext}` : "
       emotional: `Escreva uma mensagem emocionante e tocante para uma família no Natal. 
 Fale sobre o amor, a gratidão, os momentos especiais compartilhados e a importância de estar juntos. 
 Seja genuíno e sincero, como se estivesse escrevendo uma carta do coração.
-IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite.`,
+IMPORTANTE: Escreva em português brasileiro, com no máximo 500 caracteres (contando espaços), em um único parágrafo, e NÃO coloque nenhuma assinatura no final. Não escreva nada como 'Seu Nome', 'Com carinho', 'Atenciosamente' ou variações.`,
       
       funny: `Escreva uma mensagem engraçada e descontraída para uma família no Natal. 
 Use humor leve e carinhoso, faça referências a momentos divertidos, tradições familiares engraçadas e a alegria de estar juntos. 
 Mantenha o tom positivo e festivo, sem ser ofensivo.
-IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite.`,
+IMPORTANTE: Escreva em português brasileiro, com no máximo 500 caracteres (contando espaços), em um único parágrafo, e NÃO coloque nenhuma assinatura no final. Não escreva nada como 'Seu Nome', 'Com carinho', 'Atenciosamente' ou variações.`,
       
       poetic: `Escreva uma mensagem poética e lírica para uma família no Natal. 
 Use uma linguagem mais elaborada, com metáforas sobre o Natal, a luz, o amor e a união. 
 Crie uma atmosfera mágica e encantadora, como um poema em prosa.
-IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite.`
+IMPORTANTE: Escreva em português brasileiro, com no máximo 500 caracteres (contando espaços), em um único parágrafo, e NÃO coloque nenhuma assinatura no final. Não escreva nada como 'Seu Nome', 'Com carinho', 'Atenciosamente' ou variações.`
     }
 
     const userPrompt = userPrompts[promptType as keyof typeof userPrompts]
@@ -80,19 +80,28 @@ IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ult
       max_tokens: 300, // Limite de tokens para manter a mensagem concisa
     })
 
-    const generatedMessage = completion.choices[0]?.message?.content
+    let rawMessage = completion.choices[0]?.message?.content ?? ""
 
-    if (!generatedMessage) {
+    if (!rawMessage) {
       return NextResponse.json(
         { error: "Não foi possível gerar a mensagem" },
         { status: 500 }
       )
     }
 
-    // Limitar a mensagem a 500 caracteres (contando espaços)
-    const maxLength = 500
-    const trimmedMessage = generatedMessage.trim()
-    const finalMessage = trimmedMessage.slice(0, maxLength)
+    // Limite máximo de 500 chars
+    rawMessage = rawMessage.slice(0, 500)
+
+    // Remover assinaturas automáticas
+    const assinaturaRegex =
+      /(com carinho,?|com amor,?|atenciosamente,?|[\[\(]?\s*seu nome\s*[\]\)]?)\s*$/i
+    rawMessage = rawMessage.replace(assinaturaRegex, "").trim()
+
+    // Remover quebras de linha e manter em um único parágrafo
+    rawMessage = rawMessage.replace(/\n+/g, " ").replace(/\s+/g, " ").trim()
+
+    // Garantir que não ultrapasse 500 caracteres após processamento
+    const finalMessage = rawMessage.slice(0, 500)
 
     return NextResponse.json({ message: finalMessage })
   } catch (error) {

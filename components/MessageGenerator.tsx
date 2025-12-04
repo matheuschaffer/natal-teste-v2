@@ -32,12 +32,12 @@ export function MessageGenerator({ theme, onMessageChange, onConfirm }: MessageG
   const { celebrate } = useCelebration()
   const elf = elfAssistant()
 
-  // Auto-confirmar quando houver mensagem
+  // Auto-confirmar quando houver mensagem (apenas quando não estiver editando)
   useEffect(() => {
-    if (message.trim().length > 0) {
+    if (!isEditing && message.trim().length > 0) {
       onConfirm?.()
     }
-  }, [message, onConfirm])
+  }, [message, onConfirm, isEditing])
 
   const handleMessageChange = (newMessage: string) => {
     setMessage(newMessage)
@@ -110,11 +110,12 @@ export function MessageGenerator({ theme, onMessageChange, onConfirm }: MessageG
   }
 
   const saveEdit = () => {
+    // Salvar sempre que houver texto, mesmo que vazio (permite limpar a mensagem)
+    handleMessageChange(editingText)
+    setIsEditing(false)
+    celebrate("spray")
+    // Auto-confirmar após salvar edição
     if (editingText.trim().length > 0) {
-      handleMessageChange(editingText)
-      setIsEditing(false)
-      celebrate("spray")
-      // Auto-confirmar após salvar edição
       onConfirm?.()
     }
   }
@@ -168,11 +169,10 @@ export function MessageGenerator({ theme, onMessageChange, onConfirm }: MessageG
             <div className="flex gap-2 justify-center">
               <Button
                 onClick={saveEdit}
-                disabled={!editingText.trim()}
-                className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <Check className="w-4 h-4" />
-                Salvar
+                Concluir
               </Button>
               <Button
                 variant="outline"
