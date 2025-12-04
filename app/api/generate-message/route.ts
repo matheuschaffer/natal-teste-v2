@@ -39,7 +39,7 @@ As mensagens devem ser:
 - Apropriadas para o contexto familiar
 - Escritas em português brasileiro
 - Com um tom caloroso e acolhedor
-- Entre 100 e 200 palavras
+- IMPORTANTE: Responda com uma única mensagem em português, com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite. Idealmente, entre 300 e 500 caracteres.
 
 ${userContext ? `Contexto adicional fornecido pelo usuário: ${userContext}` : ""}`
 
@@ -47,15 +47,18 @@ ${userContext ? `Contexto adicional fornecido pelo usuário: ${userContext}` : "
     const userPrompts = {
       emotional: `Escreva uma mensagem emocionante e tocante para uma família no Natal. 
 Fale sobre o amor, a gratidão, os momentos especiais compartilhados e a importância de estar juntos. 
-Seja genuíno e sincero, como se estivesse escrevendo uma carta do coração.`,
+Seja genuíno e sincero, como se estivesse escrevendo uma carta do coração.
+IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite.`,
       
       funny: `Escreva uma mensagem engraçada e descontraída para uma família no Natal. 
 Use humor leve e carinhoso, faça referências a momentos divertidos, tradições familiares engraçadas e a alegria de estar juntos. 
-Mantenha o tom positivo e festivo, sem ser ofensivo.`,
+Mantenha o tom positivo e festivo, sem ser ofensivo.
+IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite.`,
       
       poetic: `Escreva uma mensagem poética e lírica para uma família no Natal. 
 Use uma linguagem mais elaborada, com metáforas sobre o Natal, a luz, o amor e a união. 
-Crie uma atmosfera mágica e encantadora, como um poema em prosa.`
+Crie uma atmosfera mágica e encantadora, como um poema em prosa.
+IMPORTANTE: Responda com no máximo 500 caracteres (contando espaços). Não ultrapasse esse limite.`
     }
 
     const userPrompt = userPrompts[promptType as keyof typeof userPrompts]
@@ -86,7 +89,12 @@ Crie uma atmosfera mágica e encantadora, como um poema em prosa.`
       )
     }
 
-    return NextResponse.json({ message: generatedMessage.trim() })
+    // Limitar a mensagem a 500 caracteres (contando espaços)
+    const maxLength = 500
+    const trimmedMessage = generatedMessage.trim()
+    const finalMessage = trimmedMessage.slice(0, maxLength)
+
+    return NextResponse.json({ message: finalMessage })
   } catch (error) {
     console.error("Erro ao gerar mensagem:", error)
     

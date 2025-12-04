@@ -120,8 +120,9 @@ export function MessageGenerator({ theme, onMessageChange, onConfirm }: MessageG
   }
 
   const handleBlur = () => {
-    // Auto-confirmar quando o usuário terminar de digitar
-    if (message.trim().length > 0) {
+    // Auto-confirmar quando o usuário terminar de digitar (apenas no modo vazio, não no modo edição)
+    // No modo edição, o usuário deve clicar em "Salvar" ou "Cancelar" explicitamente
+    if (!isEditing && message.trim().length > 0) {
       onConfirm?.()
     }
   }
@@ -154,7 +155,6 @@ export function MessageGenerator({ theme, onMessageChange, onConfirm }: MessageG
               <Textarea
                 value={editingText}
                 onChange={(e) => setEditingText(e.target.value)}
-                onBlur={handleBlur}
                 placeholder="Escreva uma mensagem especial do coração para sua família..."
                 className={`
                   min-h-[200px] text-base leading-relaxed resize-none
