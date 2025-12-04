@@ -628,14 +628,14 @@ export function HomenagemRenderer({
                   }`}
                   style={{ fontFamily: "var(--font-playfair)" }}
                 >
-                  Nossos Melhores Momentos
+                  Nossos Momentos Inesquecíveis
                 </h2>
                 <p
                   className={`text-base md:text-lg italic ${
                     isDarkTheme ? "text-slate-600" : "text-slate-700"
                   }`}
                 >
-                  Memórias que aquecem o coração.
+                  Memórias que aquecem o coração e deixam este Natal ainda mais especial. 💖
                 </p>
               </motion.div>
 
@@ -673,7 +673,7 @@ export function HomenagemRenderer({
                 }`}
                 style={{ fontFamily: "var(--font-playfair)" }}
               >
-                A Receita da Nossa Felicidade
+                A Receita do Nosso Natal Perfeito
               </h2>
             </motion.div>
 
@@ -690,32 +690,32 @@ export function HomenagemRenderer({
                 }`}
                 style={{ fontFamily: "var(--font-playfair)" }}
               >
-                Ingredientes deste Natal:
+                Os ingredientes para tornar este Natal inesquecível:
               </p>
 
               <div className="space-y-6">
                 {[
                   {
                     icon: Smile,
-                    text: "1 Xícara de Risadas Sem Fim",
+                    text: "1 xícara generosa de risadas em família",
                     color: "text-amber-600",
                     bg: "bg-amber-100",
                   },
                   {
                     icon: Heart,
-                    text: "2 Colheres de Abraços Apertados",
+                    text: "2 colheres cheias de abraços apertados",
                     color: "text-red-500",
                     bg: "bg-red-100",
                   },
                   {
                     icon: Gift,
-                    text: "Uma pitada de Magia e Surpresas",
+                    text: "Uma pitada de magia, fé e surpresas",
                     color: "text-purple-600",
                     bg: "bg-purple-100",
                   },
                   {
                     icon: Sparkles,
-                    text: "Misture tudo com muito Amor",
+                    text: "Misture tudo com muito amor e gratidão ✨",
                     color: "text-pink-500",
                     bg: "bg-pink-100",
                   },
@@ -803,7 +803,9 @@ export function HomenagemRenderer({
                       className="text-lg md:text-xl lg:text-2xl leading-loose text-slate-800 font-lora"
                       style={{ lineHeight: "2", letterSpacing: "0.5px" }}
                     >
-                      {message}
+                      Neste Natal, quero celebrar o amor que nos une e a gratidão por cada momento que vivemos juntos. Cada risada, cada abraço e cada foto desta página contam um pedacinho da nossa história.
+                      <br /><br />
+                      Que a magia do Natal renove nossas esperanças, encha nossa casa de paz e faça brotar ainda mais carinho entre nós. Que possamos seguir lado a lado, construindo memórias lindas e lembrando sempre que a família é o nosso maior presente.
                     </p>
                   </div>
                 </div>
@@ -836,14 +838,14 @@ export function HomenagemRenderer({
                     }`}
                     style={{ fontFamily: "var(--font-playfair)" }}
                   >
-                    Escute esse áudio especial
+                    Opa... parece que alguém deixou um recado de voz pra você! 🎧
                   </h3>
                   <p
                     className={`text-base md:text-lg italic ${
                       isDarkTheme ? "text-slate-600" : "text-slate-700"
                     }`}
                   >
-                    Sua voz torna tudo mais real.
+                    Clique no play abaixo e escute essa mensagem especial preparada com muito carinho.
                   </p>
                 </div>
 
@@ -866,95 +868,6 @@ export function HomenagemRenderer({
               </motion.div>
             </div>
             <DecorativeSeparator />
-          </section>
-        )}
-
-        {/* Seção: Como usar esta surpresa */}
-        {!isPreviewMode && (
-          <section
-            className={`py-8 ${
-              isDarkTheme ? "bg-[#f5f0e8]/80" : "bg-slate-50/80"
-            }`}
-          >
-            <div className="container mx-auto px-4 max-w-3xl">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border-2 border-amber-200/50"
-              >
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <Sparkles className="w-6 h-6 text-amber-500" />
-                  <h3
-                    className={`text-xl md:text-2xl font-bold ${
-                      isDarkTheme ? "text-slate-800" : "text-slate-900"
-                    }`}
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                  >
-                    ✨ Como usar esta surpresa
-                  </h3>
-                  <Sparkles className="w-6 h-6 text-amber-500" />
-                </div>
-                <div
-                  className={`text-base md:text-lg leading-relaxed ${
-                    isDarkTheme ? "text-slate-700" : "text-slate-800"
-                  }`}
-                >
-                  <p>
-                    1. <strong>Baixe o QR Code</strong> em imagem ou PDF.<br/>
-                    2. <strong>Compartilhe com sua família</strong> pelo WhatsApp, e-mail ou impresso.<br/>
-                    3. <strong>Peça para apontarem a câmera</strong> do celular para o QR e curtirem a homenagem. 🎧
-                  </p>
-                </div>
-              </motion.div>
-            </div>
-          </section>
-        )}
-
-        {/* Bloco Final Emocional */}
-        {!isPreviewMode && (
-          <section
-            className={`py-8 ${
-              isDarkTheme ? "bg-[#f5f0e8]/80" : "bg-slate-50/80"
-            }`}
-          >
-            <div className="container mx-auto px-4 max-w-3xl text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="space-y-6"
-              >
-                <div>
-                  <h3
-                    className={`text-xl md:text-2xl font-bold mb-3 ${
-                      isDarkTheme ? "text-slate-800" : "text-slate-900"
-                    }`}
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                  >
-                    💌 Mensagem final
-                  </h3>
-                  <p
-                    className={`text-base md:text-lg leading-relaxed ${
-                      isDarkTheme ? "text-slate-700" : "text-slate-800"
-                    }`}
-                  >
-                    Que esta homenagem aqueça o coração de quem você ama. Obrigado por deixar o Natal mais especial com a sua criatividade.
-                  </p>
-                </div>
-                <div className="pt-4 border-t border-amber-200/50">
-                  <p
-                    className={`text-sm italic ${
-                      isDarkTheme ? "text-slate-600" : "text-slate-700"
-                    }`}
-                  >
-                    Feito com carinho por Surpresa de Natal ✨
-                  </p>
-                </div>
-              </motion.div>
-            </div>
           </section>
         )}
 
@@ -1245,6 +1158,95 @@ export function HomenagemRenderer({
               )}
 
               <DecorativeSeparator />
+            </div>
+          </section>
+        )}
+
+        {/* Seção: Como usar esta surpresa */}
+        {!isPreviewMode && (
+          <section
+            className={`py-8 ${
+              isDarkTheme ? "bg-[#f5f0e8]/80" : "bg-slate-50/80"
+            }`}
+          >
+            <div className="container mx-auto px-4 max-w-3xl">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border-2 border-amber-200/50"
+              >
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Sparkles className="w-6 h-6 text-amber-500" />
+                  <h3
+                    className={`text-xl md:text-2xl font-bold ${
+                      isDarkTheme ? "text-slate-800" : "text-slate-900"
+                    }`}
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    ✨ Como usar esta surpresa
+                  </h3>
+                  <Sparkles className="w-6 h-6 text-amber-500" />
+                </div>
+                <div
+                  className={`text-base md:text-lg leading-relaxed ${
+                    isDarkTheme ? "text-slate-700" : "text-slate-800"
+                  }`}
+                >
+                  <p>
+                    1. <strong>Baixe o QR Code</strong> em imagem ou PDF.<br/>
+                    2. <strong>Compartilhe com sua família</strong> pelo WhatsApp, e-mail ou impresso.<br/>
+                    3. <strong>Peça para apontarem a câmera</strong> do celular para o QR e curtirem a homenagem. 🎧
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
+
+        {/* Bloco Final Emocional */}
+        {!isPreviewMode && (
+          <section
+            className={`py-8 ${
+              isDarkTheme ? "bg-[#f5f0e8]/80" : "bg-slate-50/80"
+            }`}
+          >
+            <div className="container mx-auto px-4 max-w-3xl text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h3
+                    className={`text-xl md:text-2xl font-bold mb-3 ${
+                      isDarkTheme ? "text-slate-800" : "text-slate-900"
+                    }`}
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    💌 Mensagem final
+                  </h3>
+                  <p
+                    className={`text-base md:text-lg leading-relaxed ${
+                      isDarkTheme ? "text-slate-700" : "text-slate-800"
+                    }`}
+                  >
+                    Que esta homenagem aqueça o coração de quem você ama. Obrigado por deixar o Natal mais especial com a sua criatividade.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-amber-200/50">
+                  <p
+                    className={`text-sm italic ${
+                      isDarkTheme ? "text-slate-600" : "text-slate-700"
+                    }`}
+                  >
+                    Feito com carinho por Surpresa de Natal ✨
+                  </p>
+                </div>
+              </motion.div>
             </div>
           </section>
         )}
