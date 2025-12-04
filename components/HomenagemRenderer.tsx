@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useCelebration } from "@/hooks/useCelebration";
 import { QRCodeCanvas } from "qrcode.react";
+import { jsPDF } from "jspdf";
 
 // Componente Separador Decorativo
 const DecorativeSeparator = () => (
@@ -282,6 +283,61 @@ export function HomenagemRenderer({
     } catch (error) {
       console.error(error);
       toast.error("Não foi possível baixar o QR Code.");
+    }
+  };
+
+  // Função para baixar QR Code em PDF
+  const handleDownloadPdf = () => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const canvas = qrImageRef.current;
+      if (!canvas) {
+        toast.error("Erro ao gerar QR Code.");
+        return;
+      }
+
+      const pixCode = shareUrl; // URL da página que está no input
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const title = "Seu QR Code de Natal";
+
+      // Título centralizado
+      pdf.setFontSize(18);
+      pdf.text(title, pageWidth / 2, 30, { align: "center" });
+
+      // Tamanho do QR no PDF
+      const qrSize = 80; // em mm
+      const qrX = (pageWidth - qrSize) / 2;
+      const qrY = 50;
+
+      // Adiciona a imagem do QR Code (PNG)
+      const qrImageData = canvas.toDataURL("image/png");
+      pdf.addImage(qrImageData, "PNG", qrX, qrY, qrSize, qrSize);
+
+      // Código Pix em texto, centralizado abaixo do QR
+      if (pixCode) {
+        pdf.setFontSize(12);
+        const textY = qrY + qrSize + 15;
+        pdf.text(pixCode, pageWidth / 2, textY, {
+          align: "center",
+          maxWidth: pageWidth - 40,
+        });
+      }
+
+      pdf.save("qr-code-natal.pdf");
+      toast.success("PDF baixado com sucesso! 🎉");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Não foi possível gerar o PDF.");
     }
   };
 
@@ -974,15 +1030,23 @@ export function HomenagemRenderer({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
-                    className="flex justify-center"
+                    className="flex flex-col sm:flex-row gap-3 justify-center items-center"
                   >
                     <Button
                       onClick={handleDownloadQR}
                       size="lg"
-                      className="w-full md:w-auto px-8 py-6 text-lg font-bold bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-xl hover:shadow-emerald-500/50 transition-all duration-300 rounded-xl"
+                      className="w-full sm:w-auto px-8 py-6 text-lg font-bold bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-xl hover:shadow-emerald-500/50 transition-all duration-300 rounded-xl"
                     >
                       <Download className="w-5 h-5 mr-2" />
                       Baixar QR Code (Imagem)
+                    </Button>
+                    <Button
+                      onClick={handleDownloadPdf}
+                      size="lg"
+                      className="w-full sm:w-auto px-8 py-6 text-lg font-bold bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-xl hover:shadow-red-500/50 transition-all duration-300 rounded-xl"
+                    >
+                      <Download className="w-5 h-5 mr-2" />
+                      Baixar QR em PDF
                     </Button>
                   </motion.div>
 
