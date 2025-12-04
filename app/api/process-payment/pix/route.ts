@@ -88,16 +88,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Garantir que amount seja número
-    const numericAmount = typeof amount === "number" ? amount : Number(amount)
+    // Se amount não for fornecido ou inválido, usar valor padrão de 19.90
+    let numericAmount: number
+    if (amount && typeof amount === "number" && !isNaN(amount) && amount > 0) {
+      numericAmount = amount
+    } else if (amount && typeof amount === "string") {
+      const parsed = Number(amount)
+      numericAmount = (!isNaN(parsed) && parsed > 0) ? parsed : 19.90
+    } else {
+      // Valor padrão: 19.90
+      numericAmount = 19.90
+    }
     
-    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
-      return NextResponse.json(
-        { 
-          error: "amount é obrigatório e deve ser um número positivo",
-          message: "Valor do pagamento inválido"
-        },
-        { status: 400 }
-      )
+    // Garantir que o valor seja exatamente 19.90 (correção de segurança)
+    if (numericAmount !== 19.90) {
+      console.warn(`[process-payment/pix] Valor recebido (${numericAmount}) diferente do esperado (19.90). Corrigindo para 19.90.`)
+      numericAmount = 19.90
     }
 
     // Obter URL de notificação

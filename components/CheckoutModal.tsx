@@ -184,11 +184,8 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
       }
 
       // 2. Criar pagamento Pix via API
-      // Garantir que amount seja número
-      const rawAmount = 19.90
-      const amount = Number(
-        String(rawAmount).replace("R$", "").replace(/\./g, "").replace(",", ".").trim()
-      )
+      // Garantir que amount seja número (valor fixo: 19.90)
+      const amount = 19.90
 
       const payload = {
         pageId,
