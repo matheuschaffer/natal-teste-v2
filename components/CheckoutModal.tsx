@@ -175,6 +175,7 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
           pageId,
           name: name.trim(),
           email: email.trim(),
+          phone: phone.trim(),
         }),
       })
 

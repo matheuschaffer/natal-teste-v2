@@ -125,23 +125,36 @@ export async function getPageBySlug(slug: string) {
 }
 
 /**
- * Atualiza os dados do cliente (nome e email) em uma página existente
+ * Atualiza os dados do cliente (nome, email e telefone) em uma página existente
  * @param pageId - ID da página no Supabase
  * @param name - Nome completo do cliente
  * @param email - Email do cliente
+ * @param phone - Telefone/WhatsApp do cliente (opcional)
  */
 export async function updatePageCustomerData(
   pageId: string,
   name: string,
-  email: string
+  email: string,
+  phone?: string | null
 ): Promise<void> {
   try {
+    const updateData: {
+      customer_name: string
+      customer_email: string
+      customer_phone?: string | null
+    } = {
+      customer_name: name,
+      customer_email: email,
+    }
+
+    // Incluir telefone se fornecido
+    if (phone !== undefined && phone !== null) {
+      updateData.customer_phone = phone.trim() || null
+    }
+
     const { error } = await supabase
       .from("pages")
-      .update({
-        customer_name: name,
-        customer_email: email,
-      })
+      .update(updateData)
       .eq("id", pageId)
 
     if (error) {

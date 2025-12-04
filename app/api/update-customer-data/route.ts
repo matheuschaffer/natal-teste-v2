@@ -4,7 +4,7 @@ import { updatePageCustomerData } from "@/services/pageService"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { pageId, name, email } = body
+    const { pageId, name, email, phone } = body
 
     if (!pageId || !name || !email) {
       return NextResponse.json(
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Atualizar dados do cliente
-    await updatePageCustomerData(pageId, name.trim(), email.trim())
+    // Atualizar dados do cliente (incluindo telefone se fornecido)
+    await updatePageCustomerData(pageId, name.trim(), email.trim(), phone || null)
 
     return NextResponse.json({
       success: true,
