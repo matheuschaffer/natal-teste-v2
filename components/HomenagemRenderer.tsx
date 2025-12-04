@@ -970,24 +970,53 @@ export function HomenagemRenderer({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="space-y-4"
+              className="space-y-6"
             >
-              <h3
-                className={`text-2xl md:text-3xl lg:text-4xl font-bold ${
-                  isDarkTheme ? "text-slate-800" : "text-slate-900"
-                }`}
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Feliz Natal e um Próspero Ano Novo!
-              </h3>
+              {/* Card com gradiente natalino */}
+              <div className="bg-gradient-to-br from-rose-50 via-red-50 to-red-100 rounded-2xl p-6 md:p-8 shadow-lg border-2 border-red-200/50">
+                {/* Divisor decorativo acima */}
+                <div className="flex items-center justify-center mb-6">
+                  <div className="flex items-center gap-4 w-full max-w-md">
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-red-300/50 to-red-300/50" />
+                    <Sparkles className="w-5 h-5 text-red-500" />
+                    <div className="flex-1 h-px bg-gradient-to-l from-transparent via-red-300/50 to-red-300/50" />
+                  </div>
+                </div>
 
-              <p
-                className={`text-lg md:text-xl italic ${getFontClass()} ${
-                  isDarkTheme ? "text-slate-700" : "text-slate-800"
-                }`}
-              >
-                Com carinho, de alguém que te ama muito.
-              </p>
+                {/* Título */}
+                <h3
+                  className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-red-700"
+                  style={{ fontFamily: "var(--font-playfair)" }}
+                >
+                  ❤️ Uma mensagem de Natal para quem você ama
+                </h3>
+
+                {/* Texto */}
+                <div
+                  className={`text-base md:text-lg leading-relaxed space-y-3 ${
+                    isDarkTheme ? "text-slate-700" : "text-slate-800"
+                  }`}
+                >
+                  <p>
+                    Neste Natal, obrigado por permitir que esta surpresa faça parte da história da sua família.
+                  </p>
+                  <p>
+                    Cada detalhe desta página foi pensado para levar carinho, esperança e lembranças inesquecíveis.
+                  </p>
+                  <p>
+                    Que a luz do Natal ilumine o coração de quem receber esta homenagem e fortaleça ainda mais os laços entre vocês. ✨
+                  </p>
+                </div>
+
+                {/* Divisor decorativo abaixo */}
+                <div className="flex items-center justify-center mt-6">
+                  <div className="flex items-center gap-4 w-full max-w-md">
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-red-300/50 to-red-300/50" />
+                    <Sparkles className="w-5 h-5 text-red-500" />
+                    <div className="flex-1 h-px bg-gradient-to-l from-transparent via-red-300/50 to-red-300/50" />
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </section>
