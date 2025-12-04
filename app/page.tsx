@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { MessageGenerator } from "@/components/MessageGenerator"
@@ -27,6 +28,9 @@ import { Gift } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function Home() {
+  const searchParams = useSearchParams()
+  const influencerRef = searchParams.get("ref") || null
+  
   const [title, setTitle] = useState("")
   const [titleConfirmed, setTitleConfirmed] = useState(false)
   const [message, setMessage] = useState("")
@@ -163,6 +167,7 @@ export default function Home() {
                   hasAudio={audioConfirmed}
                   audioSkipped={audioSkipped}
                   isPaid={isPaid}
+                  influencerRef={influencerRef}
                   onEdit={() => {
                     setIsPreviewMode(false)
                     setShowEnvelopeIntro(false)

@@ -37,6 +37,7 @@ interface FinalResultPreviewProps {
   hasAudio?: boolean;
   audioSkipped?: boolean;
   isPaid: boolean;
+  influencerRef?: string | null;
   onEdit: () => void;
   onPaymentSuccess: () => void;
 }
@@ -53,6 +54,7 @@ export function FinalResultPreview({
   hasAudio = false,
   audioSkipped = false,
   isPaid,
+  influencerRef = null,
   onEdit,
   onPaymentSuccess,
 }: FinalResultPreviewProps) {
@@ -274,6 +276,7 @@ export function FinalResultPreview({
         audioUrl,
         hasAudio: hasAudio,
         audioSkipped: audioSkipped,
+        influencerRef: influencerRef,
       });
 
       setSavedPageId(pageResult.id);

@@ -11,6 +11,7 @@ export interface PageData {
   audioUrl?: string | null
   hasAudio?: boolean
   audioSkipped?: boolean
+  influencerRef?: string | null
 }
 
 export interface PageResult {
@@ -67,6 +68,7 @@ export async function createPage(data: PageData): Promise<PageResult> {
       has_audio: data.hasAudio === true,
       audio_skipped: data.audioSkipped === true,
       slug: finalSlug,
+      influencer_ref: data.influencerRef || null,
     }
 
     // Inserir no banco de dados
