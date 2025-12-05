@@ -14,6 +14,7 @@ import { Lock, QrCode, Sparkles, Copy, Check } from "lucide-react"
 import { motion } from "framer-motion"
 
 import { useCelebration } from "@/hooks/useCelebration"
+import { trackInitiateCheckout, trackPurchase } from "@/lib/fbq"
 
 interface CheckoutModalProps {
   isOpen: boolean
@@ -72,6 +73,17 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
     }
   }, [isOpen])
 
+  // Disparar InitiateCheckout quando o modal entrar na etapa de pagamento (QR Code exibido)
+  useEffect(() => {
+    if (step === "payment" && pixData && pageId) {
+      trackInitiateCheckout({
+        value: 19.9,
+        currency: "BRL",
+        page_id: pageId,
+      })
+    }
+  }, [step, pixData, pageId])
+
   // Polling para verificar pagamento quando estiver na tela de pagamento
   useEffect(() => {
     if (step === "payment" && pixData && pageId) {
@@ -100,6 +112,14 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
             
             // Parar o intervalo
             clearInterval(interval)
+            
+            // Disparar evento Purchase antes de redirecionar
+            trackPurchase({
+              value: 19.9,
+              currency: "BRL",
+              transaction_id: json.paymentId || pageId || json.slug,
+              page_id: pageId || json.slug,
+            })
             
             // Mostrar feedback de sucesso (confetes)
             celebrate()
@@ -261,6 +281,14 @@ export function CheckoutModal({ isOpen, onClose, onPaymentSuccess, pageId, pageT
       }
 
       if (json.paid) {
+        // Disparar evento Purchase antes de redirecionar
+        trackPurchase({
+          value: 19.9,
+          currency: "BRL",
+          transaction_id: json.paymentId || pageId || json.slug,
+          page_id: pageId || json.slug,
+        })
+
         // Se a API retornar slug, usa ele para redirecionar
         const redirectSlug = json.slug
         if (redirectSlug) {
